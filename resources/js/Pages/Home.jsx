@@ -1,7 +1,10 @@
 import { Link, Head, usePage } from "@inertiajs/react";
 import { useRoute } from "../../../vendor/tightenco/ziggy";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import Auth from "./Auth";
+import { AppContext } from "../Context/AppContext";
 export default function Home({ posts }) {
+    const { name } = useContext(AppContext);
     const route = useRoute();
     const { flash } = usePage().props;
     const [flashDeletedMsg, setFlashDeletedMsg] = useState(flash.deleted);

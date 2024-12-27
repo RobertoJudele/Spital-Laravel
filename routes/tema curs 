@@ -1,0 +1,114 @@
+CREATE OR REPLACE PROCEDURE UpdateEmployeeSalary (
+    emp_id IN NUMBER,
+    increment_value IN NUMBER
+)
+IS
+    emp_exists NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO emp_exists
+    FROM employees_copy_jrc
+    WHERE employee_id = emp_id;
+
+    IF emp_exists = 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Employee ID not found');
+    ELSE
+        UPDATE employees_copy_jrc
+        SET salary = salary + increment_value
+        WHERE employee_id = emp_id;
+    END IF;
+END;
+/
+
+SELECT EMPLOYEE_ID, SALARY from EMPLOYEES_COPY_JRC;
+
+
+
+-- Cazul 1: Angajatul există, salariul este mărit
+BEGIN
+    UpdateEmployeeSalary(101, 500.00);
+END;
+/
+
+-- Cazul 2: Angajatul nu există
+BEGIN
+    UpdateEmployeeSalary(999, 500.00);
+END;
+/
+
+CREATE OR REPLACE PROCEDURE UpdateEmployeeSalary (
+    emp_id IN NUMBER,
+    increment_value IN NUMBER
+)
+IS
+    emp_exists NUMBER;
+BEGIN
+    -- Verificăm dacă angajatul există
+    SELECT COUNT(*) INTO emp_exists
+    FROM employees_copy
+    WHERE employee_id = emp_id;
+
+    IF emp_exists = 0 THEN
+        -- Dacă angajatul nu există, ridicăm o excepție
+        RAISE_APPLICATION_ERROR(-20001, 'Employee ID not found');
+    ELSE
+        -- Dacă angajatul există, actualizăm salariul
+        UPDATE employees_copy
+        SET salary = salary + increment_value
+        WHERE employee_id = emp_id;
+    END IF;
+END;
+/
+
+-- Bloc PL/SQL care apelează procedura pentru toți salariații dintr-un departament dat
+
+ACCEPT DEPT_ID NUMBER PROMPT 'Enter department ID: ';
+ACCEPT INCREMENT_VALUE NUMBER PROMPT 'Enter increment value: ';
+
+DECLARE
+    dept_id NUMBER;
+    increment_value NUMBER;
+    emp_id_cursor SYS_REFCURSOR;
+    current_emp_id NUMBER;
+    dept_exists NUMBER;
+BEGIN
+    dept_id := &DEPT_ID;
+    increment_value := &INCREMENT_VALUE;
+
+    SELECT COUNT(*) INTO dept_exists
+    FROM departaments_copy_jrc
+    WHERE department_id = dept_id;
+
+    IF dept_exists = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Departamentul nu există în baza de date.');
+    ELSE
+        OPEN emp_id_cursor FOR
+            SELECT employee_id
+            FROM employees_copy_jrc
+            WHERE department_id = dept_id;
+
+        FETCH emp_id_cursor INTO current_emp_id;
+
+        IF emp_id_cursor%NOTFOUND THEN
+            DBMS_OUTPUT.PUT_LINE('Nu există angajați în departamentul specificat.');
+        ELSE
+            LOOP
+                BEGIN
+                    UpdateEmployeeSalary(current_emp_id, increment_value);
+                EXCEPTION
+                    WHEN OTHERS THEN
+                        DBMS_OUTPUT.PUT_LINE('Eroare la actualizarea salariului pentru angajatul cu ID-ul: ' || current_emp_id);
+                END;
+                FETCH emp_id_cursor INTO current_emp_id;
+                EXIT WHEN emp_id_cursor%NOTFOUND;
+            END LOOP;
+        END IF;
+        CLOSE emp_id_cursor;
+    END IF;
+END;
+
+SELECT * from EMPLOYEES where DEPARTMENT_ID=10;
+
+SELECT * from DEPARTMENTS WHERE DEPARTMENT_ID=25;
+
+CREATE TABLE departaments_copy_jrc AS
+SELECT * FROM DEPARTMENTS;

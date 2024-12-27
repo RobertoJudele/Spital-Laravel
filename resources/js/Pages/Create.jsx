@@ -1,4 +1,6 @@
 import { useForm, Head } from "@inertiajs/react";
+import { useContext } from "react";
+import { AppContext } from "../Context/AppContext";
 
 function Create() {
     const { data, setData, post, processing, errors } = useForm({
@@ -8,7 +10,25 @@ function Create() {
         e.preventDefault();
         post("/posts");
     }
-    console.log(errors);
+    // async function submit(e) {
+    //     const { token } = useContext(AppContext);
+    //     e.preventDefault();
+    //     const res = await fetch("/api/posts", {
+    //         method: "post",
+    //         headers: {
+    //             Authorization: `Bearer ${token}`,
+    //             Accept: "application/json",
+    //             "Content-Type": "application/json",
+    //         },
+    //         body: JSON.stringify(data),
+    //     });
+
+    //     console.log(data);
+
+    //     const data = await res.json();
+
+    // }
+    console.log(data);
     return (
         <>
             {" "}

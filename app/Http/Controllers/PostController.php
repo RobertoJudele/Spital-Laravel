@@ -2,18 +2,28 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Post;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
 class PostController extends Controller
+// implements HasMiddleware
 {
+
+    // public static function middleware()
+    // {
+    //     return [new Middleware('auth:sanctum', except: ['index', 'show'])];
+    // }
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $posts = Post::latest()->paginate(6);
-        return inertia('Home',['posts' => $posts]);
+        return inertia('Home', ['posts' => $posts]);
     }
 
     /**
@@ -29,10 +39,12 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-        $fields=$request->validate([
-            'body'=> ['required']
+        $fields = $request->validate([
+            'body' => ['required']
         ]);
-        Post::create($fields);
+
+        $post = $request->user()->posts()->create($fields);
+
         return redirect('/');
     }
 
@@ -41,7 +53,7 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
-        return inertia('Show', ['post'=>$post]);
+        return inertia('Show', ['post' => $post]);
     }
 
     /**
@@ -49,7 +61,7 @@ class PostController extends Controller
      */
     public function edit(Post $post)
     {
-        return inertia('Edit', ['post'=>$post]);
+        return inertia('Edit', ['post' => $post]);
     }
 
     /**
@@ -57,8 +69,9 @@ class PostController extends Controller
      */
     public function update(Request $request, Post $post)
     {
-        $fields=$request->validate([
-            'body'=> ['required']
+        Gate::authorize('modify', $post);
+        $fields = $request->validate([
+            'body' => ['required']
         ]);
         $post->update($fields);
         return redirect('/')->with('updated', 'Post has been updated');
@@ -69,6 +82,7 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
+        Gate::authorize('modify', $post);
         $post->delete();
         return redirect('/')->with('deleted', 'Post has been deleted');
     }
